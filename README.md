@@ -72,7 +72,6 @@ graph LR
 
 - Python 3.8+
 - 8GB+ RAM
-- 10GB+ storage space
 
 ### Setup
 
