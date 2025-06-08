@@ -85,7 +85,7 @@ graph LR
 2. Create necessary directories if they do not exist:
 
     ```bash
-    mkdir -p data/raw data/processed data/images models
+    mkdir -p data/raw/processed/images
     ```
 
 ### Data Setup
