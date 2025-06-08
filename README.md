@@ -112,6 +112,9 @@ python run.py all
     ```bash
     python run.py preprocess
     ```
+- **Make sure that the following folders have been populated once Preprocessing is completed**
+    - data/images
+    - data/processed
 
 - **Feature Extraction & Indexing**
 
@@ -119,7 +122,7 @@ python run.py all
     python run.py extract
     ```
 
-- **Make sure that you have the following files in data/processed once feature extraction is done**
+- **Make sure that you have the following files in data/processed once feature extraction is completed**
    - combined_data.pkl
    - faiss_index.bin
    - features.pkl
