@@ -151,8 +151,6 @@ The web application will be available at `http://20.101.0.13:5001`
 ### 3. Visual Search Engine (`src/visual_search.py`)
 - Supports both image and text-based queries
 - Real-time similarity search using FAISS
-- Filtering capabilities (price, brand, category)
-- Trending product discovery
 
 ### 4. Outfit Recommendation (`src/outfit_recommendation.py`)
 - Style compatibility scoring based on category rules
