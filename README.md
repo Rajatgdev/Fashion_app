@@ -122,7 +122,7 @@ python run.py all
     python run.py extract
     ```
 
-- **Make sure that you have the following files in data/processed once feature extraction is completed**
+- **Make sure that you have the following files in **data/processed** once feature extraction is completed**
    - combined_data.pkl
    - faiss_index.bin
    - features.pkl
