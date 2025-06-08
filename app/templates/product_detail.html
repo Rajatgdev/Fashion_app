@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.product_name }} - Fashion Visual Search{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Product Images -->
+        <div class="col-md-6">
+            <div class="card">
+                <!-- Main product image with fixed cropping -->
+                <img src="{{ product.image_url }}" 
+                     class="card-img-top" 
+                     alt="{{ product.product_name }}" 
+                     style="height: 500px; object-fit: contain; object-position: center; background-color: #f8f9fa;">
+                
+                {% if product.additional_images %}
+                <div class="card-body">
+                    <h6 class="mb-3">More Views</h6>
+                    <div class="row">
+                        {% for img_url in product.additional_images[:4] %}
+                        <div class="col-3 mb-2">
+                            <img src="{{ img_url }}" 
+                                 class="img-fluid rounded border" 
+                                 style="height: 80px; object-fit: contain; cursor: pointer; background-color: #f8f9fa;" 
+                                 onclick="document.querySelector('.card-img-top').src='{{ img_url }}'">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Product Details -->
+        <div class="col-md-6">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                    <li class="breadcrumb-item">{{ product.category.title() }}</li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ product.product_name[:30] }}...</li>
+                </ol>
+            </nav>
+            
+            <h2 class="mb-2">{{ product.product_name }}</h2>
+            <p class="text-muted mb-3 h5">{{ product.brand }}</p>
+            
+            <div class="price-section mb-4 p-3 bg-light rounded">
+                <h3 class="text-danger mb-2">₹{{ "{:,.0f}".format(product.selling_price_inr) }}</h3>
+                {% if product.mrp_inr and product.mrp_inr > product.selling_price_inr %}
+                <span class="text-muted text-decoration-line-through h6">₹{{ "{:,.0f}".format(product.mrp_inr) }}</span>
+                <span class="badge bg-success ms-2 fs-6">{{ "%.0f"|format(((product.mrp_inr - product.selling_price_inr) / product.mrp_inr) * 100) }}% OFF</span>
+                {% endif %}
+                <div class="mt-2">
+                    <small class="text-muted">Inclusive of all taxes</small>
+                </div>
+            </div>
+            
+            {% if product.description %}
+            <div class="mb-4">
+                <h5><i class="fas fa-info-circle text-primary"></i> Description</h5>
+                <p class="text-justify">{{ product.description }}</p>
+            </div>
+            {% endif %}
+            
+            {% if product.feature_list %}
+            <div class="mb-4">
+                <h5><i class="fas fa-list text-primary"></i> Key Features</h5>
+                <ul class="list-group list-group-flush">
+                    {% for feature in product.feature_list %}
+                    <li class="list-group-item border-0 px-0">
+                        <i class="fas fa-check text-success me-2"></i>{{ feature }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if product.meta_info %}
+            <div class="mb-4">
+                <h5><i class="fas fa-tag text-primary"></i> Product Details</h5>
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-0">{{ product.meta_info }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2 d-md-flex mb-3">
+                <button class="btn btn-success btn-lg flex-fill" onclick="addToCart('{{ product.product_id }}', '{{ product.product_name }}', '{{ product.image_url }}', '{{ product.category }}', {{ product.selling_price_inr }})">
+                    <i class="fas fa-cart-plus"></i> Add to Cart
+                </button>
+                {% if product.pdp_url %}
+                <a href="{{ product.pdp_url }}" target="_blank" class="btn btn-primary btn-lg flex-fill">
+                    <i class="fas fa-shopping-cart"></i> Buy Now
+                </a>
+                {% endif %}
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex">
+                <button class="btn btn-outline-secondary btn-lg flex-fill" onclick="window.history.back()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <a href="{{ url_for('view_cart') }}" class="btn btn-outline-info btn-lg flex-fill">
+                    <i class="fas fa-shopping-cart"></i> View Cart
+                </a>
+            </div>
+            
+            <!-- Product Category Badge -->
+            <div class="mt-3">
+                <span class="badge bg-secondary fs-6">{{ product.category.title() }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Visual Search Section -->
+    <div class="mt-5">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h4><i class="fas fa-camera"></i> Find Similar Products</h4>
+                <p class="mb-3">Upload an image to find visually similar fashion items</p>
+                <a href="{{ url_for('index') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-upload"></i> Start Visual Search
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Similar Products -->
+    {% if similar_products %}
+    <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3><i class="fas fa-images text-primary"></i> Similar Products</h3>
+            <span class="badge bg-primary">{{ similar_products|length }} items</span>
+        </div>
+        <div class="row">
+            {% for similar_product in similar_products %}
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card product-card h-100 shadow-sm">
+                    <div class="position-relative">
+                        <img src="{{ similar_product.image_url }}" 
+                             class="card-img-top" 
+                             alt="{{ similar_product.product_name }}"
+                             style="height: 200px; object-fit: contain; background-color: #f8f9fa;">
+                        <span class="position-absolute top-0 end-0 m-2 badge bg-info">Similar</span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ similar_product.product_name[:50] }}{% if similar_product.product_name|length > 50 %}...{% endif %}</h6>
+                        <p class="brand-name text-muted mb-2">{{ similar_product.brand }}</p>
+                        <p class="price-tag text-danger fw-bold mb-3">₹{{ "{:,.0f}".format(similar_product.selling_price_inr) }}</p>
+                        <div class="mt-auto">
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('product_detail', product_id=similar_product.product_id) }}" 
+                                   class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                                <button class="btn btn-success btn-sm" onclick="addToCart('{{ similar_product.product_id }}', '{{ similar_product.product_name }}', '{{ similar_product.image_url }}', '{{ similar_product.category }}', {{ similar_product.selling_price_inr }})">
+                                    <i class="fas fa-cart-plus"></i> Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Outfit Recommendations -->
+    {% if outfit_recommendations %}
+    <div class="mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3><i class="fas fa-tshirt text-success"></i> Complete the Look</h3>
+            <span class="badge bg-success">{{ outfit_recommendations|length }} recommendations</span>
+        </div>
+        <p class="text-muted mb-4">Items that pair perfectly with this product</p>
+        <div class="row">
+            {% for rec in outfit_recommendations %}
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card product-card h-100 shadow-sm">
+                    <div class="position-relative">
+                        <img src="{{ rec.image_url }}" 
+                             class="card-img-top" 
+                             alt="{{ rec.product_name }}"
+                             style="height: 200px; object-fit: contain; background-color: #f8f9fa;">
+                        <span class="position-absolute top-0 end-0 m-2 badge bg-success">
+                            {{ "%.0f"|format(rec.compatibility_score * 100) }}% Match
+                        </span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ rec.product_name[:50] }}{% if rec.product_name|length > 50 %}...{% endif %}</h6>
+                        <p class="brand-name text-muted mb-2">{{ rec.brand }}</p>
+                        <p class="price-tag text-danger fw-bold mb-3">₹{{ "{:,.0f}".format(rec.selling_price_inr) }}</p>
+                        <div class="mt-auto">
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('product_detail', product_id=rec.product_id) }}" 
+                                   class="btn btn-success btn-sm">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                                <button class="btn btn-warning btn-sm" onclick="addToCart('{{ rec.product_id }}', '{{ rec.product_name }}', '{{ rec.image_url }}', '{{ rec.category }}', {{ rec.selling_price_inr }})">
+                                    <i class="fas fa-cart-plus"></i> Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- No Recommendations Message -->
+    {% if not similar_products and not outfit_recommendations %}
+    <div class="mt-5 text-center">
+        <div class="card bg-light">
+            <div class="card-body py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h4>No Recommendations Available</h4>
+                <p class="text-muted">We're working on finding similar products and outfit suggestions for this item.</p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-home"></i> Browse More Products
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Custom CSS for this page -->
+<style>
+.product-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e0e0e0;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.price-section {
+    border-left: 4px solid #28a745;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    font-weight: bold;
+}
+
+.list-group-item {
+    background-color: transparent;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .card-img-top {
+        height: 300px !important;
+    }
+}
+</style>
+{% endblock %}

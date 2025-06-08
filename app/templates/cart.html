@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Your Cart - Fashion Visual Search{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2><i class="fas fa-shopping-cart text-primary"></i> Your Shopping Cart</h2>
+            
+            {% if cart_items %}
+            <p class="text-muted mb-4">{{ cart_items|length }} items in your cart</p>
+            
+            <div class="row">
+                {% for item in cart_items %}
+                <div class="col-md-6 mb-4">
+                    <div class="card product-card h-100">
+                        <div class="row g-0">
+                            <div class="col-4">
+                                <img src="{{ item.image_url }}" class="img-fluid rounded-start" alt="{{ item.product_name }}" style="height: 150px; object-fit: contain; background-color: #f8f9fa;">
+                            </div>
+                            <div class="col-8">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ item.product_name[:40] }}{% if item.product_name|length > 40 %}...{% endif %}</h6>
+                                    <p class="text-muted small mb-1">{{ item.brand }}</p>
+                                    <span class="badge bg-info mb-2">{{ item.category|title }}</span>
+                                    <p class="text-danger fw-bold mb-2">₹{{ "{:,.0f}".format(item.selling_price_inr) }}</p>
+                                    <div class="d-grid gap-1">
+                                        <a href="{{ url_for('product_detail', product_id=item.product_id) }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </a>
+                                        <button class="btn btn-outline-danger btn-sm" onclick="removeFromCart('{{ item.product_id }}')">
+                                            <i class="fas fa-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                <h4>Your cart is empty</h4>
+                <p class="text-muted">Start shopping to add items to your cart</p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Start Shopping
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Cart Summary Sidebar -->
+        <div class="col-md-4">
+            {% if cart_items %}
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5><i class="fas fa-calculator"></i> Cart Summary</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Items Count -->
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Items:</span>
+                        <span class="fw-bold">{{ cart_items|length }}</span>
+                    </div>
+                    
+                    <!-- Calculate and show total price -->
+                    {% set total_price = cart_items|sum(attribute='selling_price_inr') %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span>₹{{ "{:,.0f}".format(total_price) }}</span>
+                    </div>
+                    
+                    <!-- Estimated savings -->
+                    {% set total_mrp = cart_items|sum(attribute='mrp_inr') if cart_items[0].mrp_inr else total_price %}
+                    {% if total_mrp > total_price %}
+                    <div class="d-flex justify-content-between mb-2 text-success">
+                        <span>You Save:</span>
+                        <span>₹{{ "{:,.0f}".format(total_mrp - total_price) }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <!-- Final Total -->
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="h6">Total Amount:</span>
+                        <span class="h5 text-danger fw-bold">₹{{ "{:,.0f}".format(total_price) }}</span>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" onclick="proceedToCheckout()">
+                            <i class="fas fa-credit-card"></i> Proceed to Checkout
+                        </button>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-plus"></i> Continue Shopping
+                        </a>
+                        <button class="btn btn-outline-danger" onclick="clearCart()">
+                            <i class="fas fa-trash"></i> Clear Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Additional Info Card -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6><i class="fas fa-info-circle text-primary"></i> Order Information</h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-truck text-success"></i> Free shipping on orders above ₹999</li>
+                        <li><i class="fas fa-undo text-info"></i> Easy 30-day returns</li>
+                        <li><i class="fas fa-shield-alt text-warning"></i> Secure payment options</li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <script>
+        function proceedToCheckout() {
+            alert('Checkout functionality coming soon!');
+        }
+
+        function clearCart() {
+            if (confirm('Are you sure you want to clear your cart?')) {
+                fetch('/clear_cart', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                });
+            }
+        }
+        </script>
+
+    </div>
+</div>
+
+<script>
+// For removing individual items
+function removeFromCart(productId) {
+    fetch('/remove_from_cart', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({product_id: productId})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update navbar cart count BEFORE reloading
+            const cartCount = document.getElementById('cart-count');
+            if (cartCount) {
+                cartCount.textContent = data.cart_count;
+            }
+            
+            // Then reload the page
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// For clearing entire cart
+function clearCart() {
+    if (confirm('Are you sure you want to clear your cart?')) {
+        fetch('/remove_from_cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({clear_all: true})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update navbar cart count to 0
+                const cartCount = document.getElementById('cart-count');
+                if (cartCount) {
+                    cartCount.textContent = '0';
+                }
+                
+                // Then reload the page
+                location.reload();
+            }
+        });
+    }
+}
+
+function proceedToCheckout() {
+    alert('Checkout functionality coming soon!');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - Visual Fashion Search{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Search Info -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h3>Visual Search Results</h3>
+            <p class="text-muted">
+                <i class="fas fa-camera"></i> Visual search results
+                <span class="badge bg-primary ms-2">{{ results|length }} similar products found</span>
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if uploaded_image %}
+            <div class="card" style="max-width: 200px; margin-left: auto;">
+                <div class="card-header py-2">
+                    <small>Your Uploaded Image</small>
+                </div>
+                <img src="{{ url_for('static', filename=uploaded_image) }}" class="card-img-bottom" style="height: 150px; object-fit: cover;">
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if results %}
+    <!-- Similar Products -->
+    <div class="mb-5">
+        <h4><i class="fas fa-images"></i> Visually Similar Products</h4>
+        <div class="row">
+            {% for product in results %}
+            <div class="col-md-4 col-lg-3 mb-4">
+                <div class="card product-card h-100">
+                    <div class="position-relative">
+                        <img src="{{ product.image_url }}" class="card-img-top product-image" alt="{{ product.product_name }}">
+                        {% if product.similarity_score %}
+                        <span class="position-absolute top-0 end-0 m-2 similarity-score">
+                            {{ "%.0f"|format(product.similarity_score * 100) }}% match
+                        </span>
+                        {% endif %}
+                        {% if product.discount > 0 %}
+                        <span class="position-absolute top-0 start-0 m-2 badge bg-danger">
+                            {{ "%.0f"|format(product.discount) }}% OFF
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ product.product_name[:60] }}{% if product.product_name|length > 60 %}...{% endif %}</h6>
+                        <p class="brand-name mb-2">{{ product.brand }}</p>
+                        <div class="price-section mb-2">
+                            <span class="price-tag">₹{{ "{:,.0f}".format(product.selling_price_inr) }}</span>
+                            {% if product.mrp_inr and product.mrp_inr > product.selling_price_inr %}
+                            <span class="text-muted text-decoration-line-through ms-2">₹{{ "{:,.0f}".format(product.mrp_inr) }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="mt-auto">
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('product_detail', product_id=product.product_id) }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                                {% if product.pdp_url %}
+                                <a href="{{ product.pdp_url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-external-link-alt"></i> Buy Now
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Outfit Recommendations -->
+    {% if outfit_recommendations %}
+    <div class="mb-5">
+        <h4><i class="fas fa-tshirt"></i> Complete the Look</h4>
+        <p class="text-muted">Items that go well with your search</p>
+        <div class="row">
+            {% for rec in outfit_recommendations %}
+            <div class="col-md-4 col-lg-3 mb-4">
+                <div class="card product-card h-100">
+                    <div class="position-relative">
+                        <img src="{{ rec.image_url }}" class="card-img-top product-image" alt="{{ rec.product_name }}">
+                        <span class="position-absolute top-0 end-0 m-2 badge bg-success">
+                            {{ "%.0f"|format(rec.compatibility_score * 100) }}% compatible
+                        </span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ rec.product_name[:60] }}...</h6>
+                        <p class="brand-name mb-2">{{ rec.brand }}</p>
+                        <div class="price-section mb-2">
+                            <span class="price-tag">₹{{ "{:,.0f}".format(rec.selling_price_inr) }}</span>
+                        </div>
+                        <div class="mt-auto">
+                            <a href="{{ url_for('product_detail', product_id=rec.product_id) }}" class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- No Results -->
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <h4>No similar products found</h4>
+        <p class="text-muted">Try uploading a different image or check our trending products</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">
+            <i class="fas fa-camera"></i> Try Another Search
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

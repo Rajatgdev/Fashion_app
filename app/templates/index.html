@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+
+{% block title %}Fashion Visual Search - Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section with Visual Search -->
+<section class="search-section">
+    <div class="container text-center">
+        <h1 class="display-4 mb-4">Visual Fashion Search</h1>
+        <p class="lead mb-5">Upload any fashion image and discover similar products instantly with AI-powered visual search</p>
+        
+        <!-- Visual Search Upload Area -->
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card bg-white text-dark">
+                    <div class="card-body p-5">
+                        <form action="{{ url_for('search') }}" method="POST" enctype="multipart/form-data" id="search-form">
+                            <input type="hidden" name="search_type" value="image">
+                            
+                            <!-- Upload Area (initially visible) -->
+                            <div class="upload-area" id="upload-area">
+                                <i class="fas fa-camera fa-4x text-primary mb-3"></i>
+                                <h4>Upload Fashion Image</h4>
+                                <p class="text-muted mb-3">Drag and drop an image here, or click to select</p>
+                                <p class="text-muted small">Supported: JPG, PNG, GIF, WEBP (Max 16MB)</p>
+                                <input type="file" class="form-control d-none" id="image-input" name="image" accept="image/*" required>
+                                <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('image-input').click()">
+                                    <i class="fas fa-upload"></i> Choose Image
+                                </button>
+                            </div>
+                            
+                            <!-- Image Preview Area (initially hidden) -->
+                            <div id="image-preview-area" class="text-center" style="display: none;">
+                                <div class="card border-success">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3 text-success">
+                                            <i class="fas fa-check-circle"></i> Image Selected Successfully
+                                        </h5>
+                                        <div id="image-preview-container" class="mb-3"></div>
+                                        <div class="d-flex gap-2 justify-content-center align-items-center">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="changeImage()">
+                                                <i class="fas fa-edit"></i> Change Image
+                                            </button>
+                                            <div id="search-status" class="d-flex align-items-center ms-3">
+                                                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <span class="text-primary fw-bold">Searching for similar products...</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trending Products -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Trending Fashion</h2>
+        
+        {% if trending_dresses %}
+        <div class="mb-5">
+            <h3 class="mb-4"><i class="fas fa-fire text-danger"></i> Trending Dresses</h3>
+            <div class="row">
+                {% for product in trending_dresses %}
+                <div class="col-md-4 col-lg-2 mb-4">
+                    <div class="card product-card h-100">
+                        <img src="{{ product.image_url }}" class="card-img-top product-image" alt="{{ product.product_name }}">
+                        <div class="card-body p-3">
+                            <h6 class="card-title">{{ product.product_name[:40] }}...</h6>
+                            <p class="brand-name mb-2">{{ product.brand }}</p>
+                            <p class="price-tag mb-2">₹{{ "{:,.0f}".format(product.selling_price_inr) }}</p>
+                            <div class="d-grid gap-1">
+                                <a href="{{ url_for('product_detail', product_id=product.product_id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <button class="btn btn-sm btn-success" onclick="addToCart('{{ product.product_id }}')">
+                                    <i class="fas fa-cart-plus"></i> Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if trending_jeans %}
+        <div class="mb-5">
+            <h3 class="mb-4"><i class="fas fa-fire text-danger"></i> Trending Jeans</h3>
+            <div class="row">
+                {% for product in trending_jeans %}
+                <div class="col-md-4 col-lg-2 mb-4">
+                    <div class="card product-card h-100">
+                        <img src="{{ product.image_url }}" class="card-img-top product-image" alt="{{ product.product_name }}">
+                        <div class="card-body p-3">
+                            <h6 class="card-title">{{ product.product_name[:40] }}...</h6>
+                            <p class="brand-name mb-2">{{ product.brand }}</p>
+                            <p class="price-tag mb-2">₹{{ "{:,.0f}".format(product.selling_price_inr) }}</p>
+                            <div class="d-grid gap-1">
+                                <a href="{{ url_for('product_detail', product_id=product.product_id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <button class="btn btn-sm btn-success" onclick="addToCart('{{ product.product_id }}')">
+                                    <i class="fas fa-cart-plus"></i> Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">AI-Powered Visual Search Features</h2>
+        <div class="row">
+            <div class="col-md-3 text-center mb-4">
+                <div class="card border-0 bg-transparent">
+                    <div class="card-body">
+                        <i class="fas fa-eye fa-3x text-primary mb-3"></i>
+                        <h5>Visual Similarity</h5>
+                        <p class="text-muted">Upload any fashion image and find visually similar items instantly</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 text-center mb-4">
+                <div class="card border-0 bg-transparent">
+                    <div class="card-body">
+                        <i class="fas fa-palette fa-3x text-primary mb-3"></i>
+                        <h5>Style Compatibility</h5>
+                        <p class="text-muted">Get complete outfit suggestions that complement your searched item</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 text-center mb-4">
+                <div class="card border-0 bg-transparent">
+                    <div class="card-body">
+                        <i class="fas fa-brain fa-3x text-primary mb-3"></i>
+                        <h5>AI-Powered Matching</h5>
+                        <p class="text-muted">Advanced machine learning for accurate fashion item recognition</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 text-center mb-4">
+                <div class="card border-0 bg-transparent">
+                    <div class="card-body">
+                        <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                        <h5>Trend Awareness</h5>
+                        <p class="text-muted">Discover trending fashion items and current style preferences</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Enhanced image upload functionality
+document.getElementById('image-input').addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            // Hide upload area
+            document.getElementById('upload-area').style.display = 'none';
+            
+            // Show preview area
+            const previewArea = document.getElementById('image-preview-area');
+            previewArea.style.display = 'block';
+            
+            // Set preview image
+            document.getElementById('image-preview-container').innerHTML = 
+                `<img src="${e.target.result}" class="img-fluid rounded shadow" style="max-height: 300px; max-width: 100%; border: 2px solid #28a745;">`;
+            
+            // Auto-submit after a short delay
+            setTimeout(() => {
+                document.getElementById('search-form').submit();
+            }, 1000);
+        };
+        
+        reader.readAsDataURL(file);
+    }
+});
+
+function changeImage() {
+    // Reset to upload area
+    document.getElementById('upload-area').style.display = 'block';
+    document.getElementById('image-preview-area').style.display = 'none';
+    document.getElementById('image-input').value = '';
+}
+
+// Enhanced drag and drop functionality
+const uploadArea = document.getElementById('upload-area');
+const fileInput = document.getElementById('image-input');
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight(e) {
+    uploadArea.classList.add('dragover');
+    uploadArea.style.borderColor = '#007bff';
+    uploadArea.style.backgroundColor = '#f8f9ff';
+}
+
+function unhighlight(e) {
+    uploadArea.classList.remove('dragover');
+    uploadArea.style.borderColor = '#ddd';
+    uploadArea.style.backgroundColor = 'transparent';
+}
+
+uploadArea.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    if (files.length > 0) {
+        fileInput.files = files;
+        fileInput.dispatchEvent(new Event('change'));
+    }
+}
+
+// Add to cart functionality for trending products
+function addToCart(productId) {
+    fetch('/add_to_cart', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({product_id: productId})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update cart count in navigation
+            const cartCount = document.getElementById('cart-count');
+            if (cartCount) {
+                cartCount.textContent = data.cart_count;
+            }
+            
+            // Show success notification
+            showNotification(data.message, 'success');
+        } else {
+            showNotification('Error adding to cart', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error adding to cart', 'error');
+    });
+}
+
+function showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+    notification.style.cssText = 'top: 80px; right: 20px; z-index: 9999; min-width: 250px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+            <span>${message}</span>
+            <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 3000);
+}
+</script>
+
+<style>
+.upload-area {
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    border-color: #007bff !important;
+    background-color: #f8f9ff !important;
+}
+
+.product-card {
+    transition: all 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+#image-preview-area {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.border-success {
+    border-color: #28a745 !important;
+}
+</style>
+{% endblock %}

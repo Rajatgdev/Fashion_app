@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Visual Search - Fashion Visual Search{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="text-center mb-5">Visual Fashion Search</h2>
+            
+            <div class="card shadow-lg">
+                <div class="card-body p-4">
+                    <form action="{{ url_for('search') }}" method="POST" enctype="multipart/form-data" id="search-form">
+                        <input type="hidden" name="search_type" value="image">
+                        <div class="mb-3">
+                            <label for="image-input" class="form-label h5">Upload Fashion Image</label>
+                            <div class="upload-area" id="upload-area">
+                                <i class="fas fa-cloud-upload-alt fa-4x text-muted mb-3"></i>
+                                <h5>Drag and drop an image here, or click to select</h5>
+                                <p class="text-muted mb-2">Supported formats: JPG, PNG, GIF, WEBP (Max 16MB)</p>
+                                <input type="file" class="form-control d-none" id="image-input" name="image" 
+                                       accept="image/*" required>
+                                <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('image-input').click()">
+                                    <i class="fas fa-upload"></i> Choose Image
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="image-preview" class="mb-3 text-center"></div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Search Tips -->
+            <div class="card mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Visual Search Tips</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-success"><i class="fas fa-check-circle"></i> Best Results:</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-arrow-right text-primary me-2"></i>Use clear, well-lit images</li>
+                                <li class="mb-2"><i class="fas fa-arrow-right text-primary me-2"></i>Focus on the main fashion item</li>
+                                <li class="mb-2"><i class="fas fa-arrow-right text-primary me-2"></i>Avoid cluttered backgrounds</li>
+                                <li class="mb-2"><i class="fas fa-arrow-right text-primary me-2"></i>Higher resolution images work better</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-info"><i class="fas fa-search"></i> What We Can Find:</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-arrow-right text-primary me-2"></i>Similar dresses and styles</li>
+                                <li class="mb-2"><i class="fas fa-arrow-right text-primary me-2"></i>Matching jeans and pants</li>
+                                <li class="mb-2"><i class="fas fa-arrow-right text-primary me-2"></i>Complete outfit suggestions</li>
+                                <li class="mb-2"><i class="fas fa-arrow-right text-primary me-2"></i>Style-compatible items</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-submit image upload functionality
+document.getElementById('image-input').addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Show preview with loading animation
+            document.getElementById('image-preview').innerHTML = 
+                `<div class="mb-3">
+                    <img src="${e.target.result}" class="img-fluid rounded shadow" style="max-height: 300px;">
+                </div>
+                <div class="text-center">
+                    <div class="spinner-border text-primary me-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="text-primary fw-bold">Analyzing image and finding similar products...</span>
+                </div>`;
+            
+            // Auto-submit the form
+            setTimeout(() => {
+                document.getElementById('search-form').submit();
+            }, 1000);
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Enhanced drag and drop functionality
+const uploadArea = document.getElementById('upload-area');
+const fileInput = document.getElementById('image-input');
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight(e) {
+    uploadArea.classList.add('dragover');
+    uploadArea.style.borderColor = '#007bff';
+    uploadArea.style.backgroundColor = '#f8f9ff';
+}
+
+function unhighlight(e) {
+    uploadArea.classList.remove('dragover');
+    uploadArea.style.borderColor = '#ddd';
+    uploadArea.style.backgroundColor = 'transparent';
+}
+
+uploadArea.addEventListener('drop', handleDrop, false);
+uploadArea.addEventListener('click', () => fileInput.click());
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    if (files.length > 0) {
+        fileInput.files = files;
+        fileInput.dispatchEvent(new Event('change'));
+    }
+}
+
+// Add visual feedback for file selection
+uploadArea.addEventListener('click', function() {
+    this.style.transform = 'scale(0.98)';
+    setTimeout(() => {
+        this.style.transform = 'scale(1)';
+    }, 150);
+});
+</script>
+
+<style>
+.upload-area {
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    border-color: #007bff !important;
+    background-color: #f8f9ff !important;
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}
